@@ -228,7 +228,6 @@ void gameOverScreen() {
 }
 
 void resetDinoGame() {
-  dinoY = SCREEN_HEIGHT
-  10; dinoVelocity = 0;
+  dinoY = SCREEN_HEIGHT10;dinoVelocity = 0;
   dinoObstacle.x = SCREEN_WIDTH;     dinoObstacle.height = random(10,SCREEN_HEIGHT - 10); score = 0;   dinoJumping = false;
 }
