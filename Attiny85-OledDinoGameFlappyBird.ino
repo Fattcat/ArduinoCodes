@@ -41,6 +41,19 @@ int totalItems = sizeof(menuItems) / sizeof(menuItems[0]);
 
 int gameState = 0;  // 0: Main Menu, 1: Dino Game, 2: Flappy Bird
 
+// Dino game premenné
+int dinoY = SCREEN_HEIGHT - 10; // Pozícia Dina (skákajúca postavička)
+int dinoVelocity = 0;           // Rýchlosť Dina
+int dinoJumpForce = -4;         // Sila skoku Dina
+int dinoGravity = 1;            // Gravitačná sila Dina
+bool dinoJumping = false;       // Indikátor, či je Dino vo vzduchu
+
+struct DinoObstacle {
+  int x;
+  int height;
+};
+DinoObstacle dinoObstacle = {SCREEN_WIDTH, SCREEN_HEIGHT - 10}; // Prekážka pre Dino hru
+
 void setup() {
   Serial.begin(9600);
 
@@ -129,7 +142,7 @@ void startFlappyBird() {
 }
 
 void startDinoGame() {
-  // Inicializácia hry Dino (zjednodušená verzia)
+  // Inicializácia hry Dino
   display.clearDisplay();
   display.setCursor(0, 0);
   display.println("Dino Game");
@@ -137,63 +150,55 @@ void startDinoGame() {
   delay(2000);  // Simulujeme spustenie hry (zastavenie pred návratom do menu)
   
   inGame = true; // Začiatok hry
-  resetGame();   // Resetovanie hry
+  resetDinoGame();   // Resetovanie hry
 }
 
-void playFlappyBird() {
+void playDinoGame() {
   display.clearDisplay();
 
   // Čítanie tlačidla pre skok
-  if (digitalRead(BTN_JUMP) == LOW) {
-    birdVelocity = jumpForce; // Posun vtáka nahor
+  if (digitalRead(BTN_JUMP) == LOW && !dinoJumping) {
+    dinoVelocity = dinoJumpForce; // Posun Dina nahor
+    dinoJumping = true;
   }
 
   // Aplikácia gravitácie
-  birdVelocity += gravity;
+  dinoVelocity += dinoGravity;
 
-  // Obmedzenie maximálnej rýchlosti pádu
-  if (birdVelocity > maxFallSpeed) {
-    birdVelocity = maxFallSpeed;
+  // Aktualizácia pozície Dina
+  dinoY += dinoVelocity;
+
+  // Kontrola, či Dino nedopadol na zem
+  if (dinoY > SCREEN_HEIGHT - 10) {
+    dinoY = SCREEN_HEIGHT - 10;
+    dinoVelocity = 0;
+    dinoJumping = false;
   }
 
-  // Aktualizácia pozície vtáka
-  birdY += birdVelocity;
-
-  // Kontrola, či vtáčik nevyliezol mimo obrazovky
-  if (birdY < BIRD_RADIUS) {
-    birdY = BIRD_RADIUS;
-    birdVelocity = 0;
-  } else if (birdY > SCREEN_HEIGHT - BIRD_RADIUS) {
-    birdY = SCREEN_HEIGHT - BIRD_RADIUS;
-    inGame = false; // Koniec hry
-    gameOverScreen();
-    return;
+  // Pohyb prekážky
+  dinoObstacle.x -= 2;  // Rýchlosť pohybu prekážky
+  if (dinoObstacle.x < -10) {
+    dinoObstacle.x = SCREEN_WIDTH;
+    dinoObstacle.height = random(10, SCREEN_HEIGHT - 10);
+    score++; // Zvýšenie skóre
   }
 
-  // Pohyb prekážky doľava
-  flappyObstacle.x -= 3; // Rýchlosť pohybu prekážky
-  if (flappyObstacle.x < -10) {
-    flappyObstacle.x = SCREEN_WIDTH;
-    flappyObstacle.gapY = random(10, SCREEN_HEIGHT - flappyObstacle.gapHeight - 10);
-    score++; // Zvýšenie skóre pri prekonaní prekážky
-  }
+  // Kreslenie prekážky
+  display.fillRect(dinoObstacle.x, dinoObstacle.height, 10, SCREEN_HEIGHT - dinoObstacle.height, SSD1306_WHITE);
 
-  // Kontrola kolízie vtáčika s prekážkami
-  if (flappyObstacle.x < 10 + BIRD_RADIUS && flappyObstacle.x + 10 > 10 - BIRD_RADIUS) {
-    if (birdY - BIRD_RADIUS < flappyObstacle.gapY || 
-        birdY + BIRD_RADIUS > flappyObstacle.gapY + flappyObstacle.gapHeight) {
-      inGame = false; // Nastavenie konca hry
+  // Kontrola kolízie medzi Dinom a prekážkou
+  if (dinoObstacle.x < 20 && dinoObstacle.x + 10 > 10) {
+    if (dinoY > dinoObstacle.height) {
+      inGame = false; // Konec hry
       gameOverScreen();
       return;
     }
   }
 
-  // Kreslenie hry
-  display.fillCircle(10, birdY, BIRD_RADIUS, SSD1306_WHITE); // Kreslenie vtáka
-  display.fillRect(flappyObstacle.x, 0, 10, flappyObstacle.gapY, SSD1306_WHITE); // Horná prekážka
-  display.fillRect(flappyObstacle.x, flappyObstacle.gapY + flappyObstacle.gapHeight, 10, SCREEN_HEIGHT - (flappyObstacle.gapY + flappyObstacle.gapHeight), SSD1306_WHITE); // Dolná prekážka
+  // Kreslenie Dina
+  display.fillRect(10, dinoY, 10, 10, SSD1306_WHITE); // Dino je zobrazený ako malý štvorček
 
-  // Zobrazenie skóre počas hry
+  // Zobrazenie skóre
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
@@ -205,5 +210,25 @@ void playFlappyBird() {
 
 void gameOverScreen() {
   display.clearDisplay();
+  display.setCursor(30, 20);
+  display.println("Game Over");
+  display.setCursor(30, 30);
+  display.print("Score: ");
+  display.print(score);
+  display.setCursor(30, 40);
+  display.println("Press Enter to Restart");
+  display.display();
 
-  // Nakreslenie čier
+  while (digitalRead(BUTTON_ENTER) == HIGH) {
+    delay(10); // Čakanie na stlačenie tlačidla Enter pre reštart
+  }
+
+  resetDinoGame(); // Resetovanie hry
+  inGame = true;
+}
+
+void resetDinoGame() {
+  dinoY = SCREEN_HEIGHT
+  10; dinoVelocity = 0;
+  dinoObstacle.x = SCREEN_WIDTH;     dinoObstacle.height = random(10,SCREEN_HEIGHT - 10); score = 0;   dinoJumping = false;
+}
