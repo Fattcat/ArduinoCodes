@@ -3,6 +3,8 @@
 #include <Wire.h>
 
 // ----- Definície OLED a pinov -----
+// It might me Full as 100 %
+
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
@@ -20,8 +22,8 @@ const int menuItems = 2; // Počet položiek menu
 // ----- Premenné pre DinoGame -----
 int dinoY = SCREEN_HEIGHT - 10; // Vertikálna pozícia hráča
 float dinoVelocity = 0;         // Vertikálna rýchlosť hráča
-const int dinoJumpForce = 5;    // Sila skoku
-const float dinoGravity = 0.25; // Gravitačná sila
+const int dinoJumpForce = 4;    // Sila skoku
+const float dinoGravity = 0.6;  // Gravitačná sila
 
 struct DinoObstacle {
   int x;
@@ -123,14 +125,14 @@ void startDinoGame() {
     }
 
     // Pohyb prekážky
-    dinoObstacle.x -= 3;
+    dinoObstacle.x -= 4; // Zrýchlenie prekážok
     if (dinoObstacle.x < -10) {
       dinoObstacle.x = SCREEN_WIDTH;
       dinoScore++;
     }
 
     // Kontrola kolízie
-    if (dinoObstacle.x < 18 && dinoObstacle.x > 6 && dinoY > SCREEN_HEIGHT - 20) {
+    if (dinoObstacle.x < 18 && dinoObstacle.x > 8 && dinoY > SCREEN_HEIGHT - 20) {
       dinoGameActive = false;
       showGameOverScreen(dinoScore);
       break;
