@@ -29,7 +29,8 @@ struct DinoObstacle {
   bool active; // Nové pole na sledovanie aktivity prekážky
 };
 
-DinoObstacle obstacles[3]; // Pole pre prekážky
+DinoObstacle dinoObstacle; // Deklarovanie dinoObstacle
+
 bool dinoGameActive = false;
 int dinoScore = 0;
 
@@ -115,6 +116,21 @@ void showMenu() {
   }
 }
 
+void showGameOverScreen(int score) {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print("Game Over");
+  display.setTextSize(1);
+  display.setCursor(0, 20);
+  display.print("Score: ");
+  display.print(score);
+  display.display();
+  delay(2000);
+}
+
+
 // ----- DinoGame -----
 void startDinoGame() {
   dinoGameActive = true;
@@ -170,19 +186,30 @@ void startDinoGame() {
 }
 
 // ----- Flappy Bird -----
+// Definuj štruktúru pre prekážky
+struct FlappyObstacle {
+  int x;
+  int gapY;
+  const int gapHeight = 16;
+};
+
+FlappyObstacle flappyObstacle; // Globálna premenná pre prekážky
+
 void startFlappyBird() {
-  flappyGameActive = true;
-  birdScore = 0;
-  birdY = SCREEN_HEIGHT / 2.0;
+  flappyBirdActive = true;
+
+  int birdScore = 0; // Deklarácia pre skóre Flappy Bird
+
+  birdY = SCREEN_HEIGHT / 2;
   birdVelocity = 0;
   flappyObstacle.x = SCREEN_WIDTH;
 
-  while (flappyGameActive) {
+  while (flappyBirdActive) {
     display.clearDisplay();
 
     // Skok
     if (digitalRead(BUTTON_ENTER) == LOW) {
-      birdVelocity = birdJumpForce;
+      birdVelocity = -birdJump;
     }
 
     // Aplikácia gravitácie
@@ -192,7 +219,7 @@ void startFlappyBird() {
     // Obmedzenie obrazovky
     if (birdY < 0) birdY = 0;
     if (birdY > SCREEN_HEIGHT) {
-      flappyGameActive = false;
+      flappyBirdActive = false;
       showGameOverScreen(birdScore);
       break;
     }
@@ -208,7 +235,7 @@ void startFlappyBird() {
     // Kontrola kolízie
     if (flappyObstacle.x < 14 && flappyObstacle.x > 6) {
       if (birdY < flappyObstacle.gapY || birdY > flappyObstacle.gapY + flappyObstacle.gapHeight) {
-        flappyGameActive = false;
+        flappyBirdActive = false;
         showGameOverScreen(birdScore);
         break;
       }
@@ -228,6 +255,7 @@ void startFlappyBird() {
     delay(30);
   }
 }
+
 
 
 // ----- Pong -----
