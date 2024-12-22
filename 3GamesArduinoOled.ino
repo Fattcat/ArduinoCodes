@@ -281,6 +281,7 @@ void startPongGame() {
       ball_x += ball_dir_x;
       ball_y += ball_dir_y;
 
+      // Kontrola kolízie s bočnými stenami
       if (ball_x == 0 || ball_x == 127) {
         ball_dir_x = -ball_dir_x;
         if (ball_x == 0) {
@@ -290,7 +291,7 @@ void startPongGame() {
         }
       }
 
-      // Logika prekolízie s vertikálnymi stenami
+      // Kontrola kolízie s vertikálnymi stenami
       if (ball_y == 0 || ball_y == 63) {
         ball_dir_y = -ball_dir_y;
       }
@@ -299,16 +300,25 @@ void startPongGame() {
       update_needed = true;
     }
 
-    // Logika prekážok
+    // Logika pohybu pálky
     if (time > paddle_update) {
       if (digitalRead(BUTTON_UP) == LOW && player_y > 0) {
-        player_y--;
+        player_y -= 2; // Zvýšime rýchlosť pohybu pálky
       }
       if (digitalRead(BUTTON_DOWN) == LOW && player_y + PADDLE_HEIGHT < SCREEN_HEIGHT) {
-        player_y++;
+        player_y += 2; // Zvýšime rýchlosť pohybu pálky
       }
       paddle_update = time + PADDLE_RATE;
       update_needed = true;
+    }
+
+    // Kontrola kolízie lopty s pálkami
+    if (ball_x == PLAYER_X - 3 && ball_y >= player_y && ball_y <= player_y + PADDLE_HEIGHT) {
+      ball_dir_x = -ball_dir_x; // Lopta sa odrazí od hráčovej pálky
+    }
+
+    if (ball_x == MCU_X + 5 && ball_y >= mcu_y && ball_y <= mcu_y + PADDLE_HEIGHT) {
+      ball_dir_x = -ball_dir_x; // Lopta sa odrazí od pálky MCU
     }
 
     // Zobrazenie
@@ -328,6 +338,7 @@ void startPongGame() {
       display.display();
     }
 
+    // Kontrola, či niektorý hráč dosiahol cieľové skóre
     if (player_score == SCORE_LIMIT || mcu_score == SCORE_LIMIT) {
       game_over = true;
       win = player_score == SCORE_LIMIT;
