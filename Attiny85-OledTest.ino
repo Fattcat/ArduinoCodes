@@ -1,6 +1,21 @@
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
 
+
+// _____________________________________________________ //
+// ! FOR UPLOAD MUST DO THIS !
+// In Arduino IDE Program FIRST Arduino UNO as "ArduinoISP" 
+// Then PASTE THIS CODE into Arduino IDE Sketch
+// Install "Tiny4kOLED" & "TinyWireM" Libraries
+// PLUG Attiny85 to your Arduino UNO and in Left top menu sellect this :
+// - Board : Attiny25/45/85
+// - Port : Arduino UNO board port
+// - Clock : INTERNAL 8 MHz
+// - Processor : Attiny85
+// - Programmer : Arduino as ISP
+// Then click Sketch -> and click Upload Using Programmer
+// It should works without error
+// _____________________________________________________ //
 void setup() {
 
   // Send the initialization sequence to the oled. This leaves the display turned off
