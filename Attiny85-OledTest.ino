@@ -1,7 +1,5 @@
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
-
-
 // _____________________________________________________ //
 // ! FOR UPLOAD MUST DO THIS !
 // In Arduino IDE Program FIRST Arduino UNO as "ArduinoISP" 
@@ -19,7 +17,8 @@
 void setup() {
 
   // Send the initialization sequence to the oled. This leaves the display turned off
-  oled.begin();
+  // Added this cuz it is FOR FULL SIZE RESOLUTION OF DISPLAY (Not just 128x32 BUT 128x64)
+  oled.begin(128,64,sizeof(tiny4koled_init_128x64br), tiny4koled_init_128x64br);
   // Clear the memory before turning on the display
   oled.clear();
   // Turn on the display
