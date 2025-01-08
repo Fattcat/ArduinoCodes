@@ -1,6 +1,6 @@
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
-
+// fixed display
 #define UP_BUTTON 3
 #define DOWN_BUTTON 4
 #define ENTER_BUTTON 1
@@ -9,8 +9,8 @@ int hours = 13; // Prednastavený čas (hodiny)
 int minutes = 21; // Prednastavený čas (minúty)
 int seconds = 0; // Prednastavený čas (sekundy)
 
-bool settingMode = false; // Prepnúť medzi režimom nastavovania a normálnym režimom
-int settingOption = 0; // 0 = hodiny, 1 = minúty
+bool settingMode = false; // Režim nastavovania
+int settingOption = 0;    // 0 = hodiny, 1 = minúty
 
 unsigned long previousMillis = 0;
 const long interval = 1000; // 1 sekunda
@@ -99,5 +99,4 @@ void loop() {
       oled.print("Set Minutes");
     }
   }
-  oled.display();
 }
