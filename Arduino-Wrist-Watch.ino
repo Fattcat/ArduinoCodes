@@ -1,6 +1,16 @@
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
+
 // fixed display
+// CONNECTION \\
+// ----------------------------------------------------- \\
+//        (RESET) PB5  - +-----+ -  VCC (OLED VCC)
+//        Up Btn  PB3  - +     + -  PB2 (SCL to OLED)
+//       Down Btn PB4  - +     + -  PB1 (Enter Btn)
+//  Buttons GND   GND  - +-----+ -  PB0 (SDA to OLED)
+//  - And OLED GND !
+// ----------------------------------------------------- \\
+
 #define UP_BUTTON 3
 #define DOWN_BUTTON 4
 #define ENTER_BUTTON 1
