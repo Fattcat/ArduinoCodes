@@ -1,7 +1,8 @@
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
-#include <MPU6050.h>
+#include <MPU6050.h> // Download MPU6050 from Electronic Cats version 1.4.3 in Arduino IDE
+// Becaise Adafruit_MPU6050 Does NOT WORK ! (I think it, so you should TEST IT to make sure it supports)
 
 // Definície OLED
 #define SCREEN_WIDTH 128
