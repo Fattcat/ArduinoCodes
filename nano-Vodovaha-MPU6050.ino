@@ -1,80 +1,129 @@
 #include <Wire.h>
-#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <MPU6050.h> // download "MPU6050 By Electronic Cats version 1.4.3" in Arduino IDE
-// Adafruit_KPU6050 Does NOT work (I think it, so please test it)
+#include <Adafruit_GFX.h>
+#include <MPU6050.h>
 
-// OLED nastavenia
+// Definície pre OLED
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
-#define OLED_RESET    -1
+#define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// MPU6050
+// Inicializácia MPU6050
 MPU6050 mpu;
 
-void setup() {
-  Wire.begin();
-  Serial.begin(9600);
+// Premenné pre kalibráciu
+float offsetAngleX = 0;
+float offsetAngleY = 0;
 
-  // Inicializácia OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;); // zastaviť
+// Stred displeja
+int centerX = SCREEN_WIDTH / 2;
+int centerY = SCREEN_HEIGHT / 2;
+
+// Funkcia na kalibráciu MPU6050
+void calibrateMPU() {
+  const int samples = 500;
+  float sumX = 0;
+  float sumY = 0;
+
+  for (int i = 0; i < samples; i++) {
+    int16_t ax, ay, az;
+    mpu.getAcceleration(&ax, &ay, &az);
+
+    float axg = ax / 16384.0;
+    float ayg = ay / 16384.0;
+    float azg = az / 16384.0;
+
+    float angleX = atan2(ayg, sqrt(axg * axg + azg * azg)) * 180.0 / PI;
+    float angleY = atan2(-axg, sqrt(ayg * ayg + azg * azg)) * 180.0 / PI;
+
+    sumX += angleX;
+    sumY += angleY;
+    delay(5);
   }
-  display.clearDisplay();
+
+  offsetAngleX = sumX / samples;
+  offsetAngleY = sumY / samples;
+}
+
+void setup() {
+  // Inicializácia sériového monitora
+  Serial.begin(9600);
+  
+  // Inicializácia I2C zbernice
+  Wire.begin();
   
   // Inicializácia MPU6050
   mpu.initialize();
   if (!mpu.testConnection()) {
-    Serial.println(F("MPU6050 connection failed"));
+    Serial.println("Chyba: MPU6050 sa nepripojil.");
     while (1);
   }
+
+  // Inicializácia OLED displeja
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("Chyba: OLED displej sa nenačítal."));
+    while (1);
+  }
+  
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("Kalibracia...");
+  display.display();
+
+  // Kalibrácia MPU6050
+  calibrateMPU();
+  
+  delay(500);
 }
 
 void loop() {
   int16_t ax, ay, az;
   mpu.getAcceleration(&ax, &ay, &az);
 
-  // Prevod z raw dát na "g" jednotky (akcelerácia)
   float axg = ax / 16384.0;
   float ayg = ay / 16384.0;
   float azg = az / 16384.0;
 
-  // Výpočet náklonu
+  // Výpočet uhlov v stupňoch
   float angleX = atan2(ayg, sqrt(axg * axg + azg * azg)) * 180.0 / PI;
   float angleY = atan2(-axg, sqrt(ayg * ayg + azg * azg)) * 180.0 / PI;
 
-  // Debug na Serial Monitor
-  Serial.print("X: ");
-  Serial.print(angleX);
-  Serial.print(" | Y: ");
-  Serial.println(angleY);
+  // Korekcia podľa kalibrácie
+  float correctedAngleX = angleX - offsetAngleX;
+  float correctedAngleY = angleY - offsetAngleY;
 
-  // Výpis na OLED
+  // Výpočet posunutia bublinky (Opravená orientácia!)
+  int offsetX = constrain((int)(-correctedAngleY * 2), -45, 45);
+  int offsetY = constrain((int)(correctedAngleX * 2), -20, 20);
+
+  // Vymazanie displeja
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
 
+  // Vykreslenie rámčeka
+  display.drawRect(centerX - 50, centerY - 5, 100, 10, SSD1306_WHITE); // horizontálna "rúra"
+  display.drawRect(centerX - 5, centerY - 30, 10, 60, SSD1306_WHITE);  // vertikálna "rúra"
+
+  // Vykreslenie bublinky
+  display.fillCircle(centerX + offsetX, centerY + offsetY, 4, SSD1306_WHITE);
+
+  // Zobrazenie uhlov na displeji
   display.setCursor(0, 0);
-  display.print("X Tilt: ");
-  display.print(angleX, 1);
-  display.print((char)247); // znak °
+  display.setTextSize(1);
+  display.print("X: ");
+  display.print(correctedAngleX, 1);
+  display.print((char)247); // znak stupňa
+  display.println(" ");
 
   display.setCursor(0, 10);
-  display.print("Y Tilt: ");
-  display.print(angleY, 1);
-  display.print((char)247); // znak °
-
-  // Grafický indikátor
-  int centerX = SCREEN_WIDTH / 2;
-  int centerY = SCREEN_HEIGHT / 2;
-  int offsetX = constrain((int)(angleY * 2), -30, 30);
-  int offsetY = constrain((int)(angleX * 2), -20, 20);
-
-  display.drawCircle(centerX, centerY, 5, SSD1306_WHITE); // statická "bublinka"
-  display.fillCircle(centerX + offsetX, centerY + offsetY, 3, SSD1306_WHITE); // pohybujúca sa bodka
+  display.print("Y: ");
+  display.print(correctedAngleY, 1);
+  display.print((char)247);
+  display.println(" ");
 
   display.display();
-  delay(100);
+
+  delay(20);
 }
