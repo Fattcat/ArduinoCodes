@@ -72,6 +72,7 @@ void setup() {
   display.println("POLOZ MA");
   display.setCursor(20, centerY + 5);    // Pod to
   display.println("ROVNO !");
+
   display.display();
 
   calibrateMPU();
@@ -92,9 +93,9 @@ void loop() {
   float correctedAngleX = angleX - offsetAngleX;
   float correctedAngleY = angleY - offsetAngleY;
 
-  // 🔄 OTOČENIE O 180°:
-  int offsetX = constrain((int)(-correctedAngleX * 2), -45, 45);
-  int offsetY = constrain((int)(correctedAngleY * 2), -20, 20);
+  // Otočenie guličky na celý displej:
+  int offsetX = constrain((int)(-correctedAngleX * 1.5), -centerX, centerX);  // Zväčšený rozsah pre pohyb na celom displeji
+  int offsetY = constrain((int)(correctedAngleY * 1.5), -centerY, centerY);   // Zväčšený rozsah pre pohyb na celom displeji
 
   display.clearDisplay();
 
